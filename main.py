@@ -11,6 +11,7 @@ check_loop = True
 
 BAD_HTML_LIST = ["br", "font", "center", "table", "style"]
 GOOD_HTML_LIST = ["section", "nav", "header", "footer", "aside", "main", "figure", "div"]
+DOCTYPE_CHECK_LIST = ["<!DOCTYPE", "<!doctype"]
 # TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
 banned_formats = ["mp4", "jpg", "webm", "css"]
 
@@ -23,11 +24,7 @@ def homepage_grab(user_id):
 
 # Checks wether DOCTYPE was used in the document
 def doctype_checker(content, user_id, url):
-    if "<!DOCTYPE>" in content.decode("utf-8"):
-        return 1
-    elif "<!DOCTYPE html>" in content.decode("utf-8"):
-        return 1
-    elif "<!doctype html>" in content.decode("utf-8"):
+    if any(check in content.decode("utf-8") for check in DOCTYPE_CHECK_LIST):
         return 1
     else:
         return 0
