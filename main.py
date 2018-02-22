@@ -1,5 +1,5 @@
-import requests
-from bs4 import BeautifulSoup
+import requests  # Needed for website fetching
+from bs4 import BeautifulSoup  # Needed for website content processing
 
 ids_to_check = []
 id_homepage = {}
@@ -11,7 +11,7 @@ check_loop = True
 
 BAD_HTML_LIST = ["br", "font", "center", "table", "style"]
 GOOD_HTML_LIST = ["section", "nav", "header", "footer", "aside", "main", "figure", "div"]
-#TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
+# TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
 banned_formats = ["mp4", "jpg", "webm", "css"]
 
 
@@ -21,25 +21,25 @@ def homepage_grab(user_id):
     print("Done {} {}".format(user_id, w.status_code))
 
 
+# Checks wether DOCTYPE was used in the document
 def doctype_checker(content, user_id, url):
     if "<!DOCTYPE>" in content.decode("utf-8"):
         return 1
-        print("<!DOCTYPE> used in {} {}".format(user_id, repr(url)))
     elif "<!DOCTYPE html>" in content.decode("utf-8"):
         return 1
-        print("<!DOCTYPE html> used in {} {}".format(user_id, repr(url)))
     elif "<!doctype html>" in content.decode("utf-8"):
         return 1
     else:
         return 0
 
 
+# Find the amount of times that a tag was used within a soup
 def tag_usage_checker(soup, user_id, tag, url):
     amount = soup.find_all(tag)
     return len(amount)
-    print("{} uses of <{}> in {} by {}".format(len(amount), tag, url, user_id))
 
 
+# Finds the first layer of links within a website
 def recursive_page_finder(soup, user_id):
     id_url_pages[user_id] = []
     links = soup.find_all("a")
@@ -60,6 +60,8 @@ def recursive_page_finder(soup, user_id):
                 else:
                     print("Didn't add {}".format("http://{}.web1.rdfx.org/{}".format(user_id, link)))
 
+# Getting the user id's
+
 
 while check_loop:
     raw_ids = input("What ID's do you want to check? Please input in a space separated list: ")
@@ -73,16 +75,18 @@ while check_loop:
         if check.startswith("Y"):
             check_loop = False
 
+# Get the index page for each user id
 for user_id in ids_to_check:
     homepage_grab(user_id)
 
+# Find first layer of sub pages for each link
 for user_id in ids_to_check:
     soup = BeautifulSoup(id_homepage[user_id]["content"], "html.parser")
     recursive_page_finder(soup, user_id)
 
 print("\n")
 
-#Init
+# Init
 for user_id in ids_to_check:
     id_good_stats[user_id] = {"page_amount": len(id_url_pages[user_id]), "doctype": 0, "tag": {}}
     id_bad_stats[user_id] = {"page_amount": len(id_url_pages[user_id]), "doctype": 0, "tag": {}}
@@ -91,7 +95,7 @@ for user_id in ids_to_check:
     for tag in GOOD_HTML_LIST:
         id_good_stats[user_id]["tag"][tag] = 0
         
-
+# Figuring out the total stats for each user for each page
 for user_id in ids_to_check:
     print("Started {}".format(user_id))
     for link in id_url_pages[user_id]:
@@ -104,14 +108,14 @@ for user_id in ids_to_check:
             id_good_stats[user_id]["tag"][tag] += tag_usage_checker(soup, user_id, tag, link)
     print("Completed {} {}".format(user_id, len(id_url_pages[user_id])))
 
-#Print the stats
+# Print the stats
 for user_id in ids_to_check:
     print("\n==================================================")
     print("\nStats on {}".format(user_id))
     print("\n==General HTML Used: ==")
     print("Amount of times DOCTYPE was used: {}".format(id_good_stats[user_id]["doctype"]))
     print("Amount of pages checked: {}".format(id_good_stats[user_id]["page_amount"]))
-    #Final output
+    # Final output
     print("\n== Bad HTML Used: ==")
     for tag in BAD_HTML_LIST:
         print("Amount of times <{}> was used: {}".format(tag, id_bad_stats[user_id]["tag"][tag]))
