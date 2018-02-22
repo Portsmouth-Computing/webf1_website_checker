@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from pprint import pprint
 
 ids_to_check = []
 id_homepage = {}
@@ -9,7 +8,9 @@ id_total_stats = {}
 banned_links = ["w3.org", "google.co"]
 check_loop = True
 
-TAG_LIST = ["br", "font", "center"]
+TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
+banned_formats = ["mp4", "jpg", "webm", "css"]
+
 
 def homepage_grab(user_id):
     w = requests.get("http://{}.web1.rdfx.org".format(user_id), timeout=30)
@@ -24,6 +25,8 @@ def doctype_checker(content, user_id, url):
     elif "<!DOCTYPE html>" in content.decode("utf-8"):
         return 1
         print("<!DOCTYPE html> used in {} {}".format(user_id, repr(url)))
+    elif "<!doctype html>" in content.decode("utf-8"):
+        return 1
     else:
         return 0
 
@@ -39,8 +42,12 @@ def recursive_page_finder(soup, user_id):
     links = soup.find_all("a")
     hyperlinks = [link["href"] for link in links]
     for link in hyperlinks:
+        if link.startswith("/"):
+            link = link[1:]
         if not any(disallowed_links in link for disallowed_links in banned_links):
             if link.startswith("#"):
+                print("Didn't add {}".format("http://{}.web1.rdfx.org/{}".format(user_id, link)))
+            elif any(link.endswith(format) for format in banned_formats):
                 print("Didn't add {}".format("http://{}.web1.rdfx.org/{}".format(user_id, link)))
             elif "http://{}.web1.rdfx.org/{}".format(user_id, link) not in id_url_pages[user_id]:
                 test = requests.get("http://{}.web1.rdfx.org/{}".format(user_id, link))
@@ -78,11 +85,18 @@ for user_id in ids_to_check:
         id_total_stats[user_id]["tag"][tag] = 0
 
 for user_id in ids_to_check:
+    print("Started {}".format(user_id))
     for link in id_url_pages[user_id]:
         content = requests.get(link).content
         id_total_stats[user_id]["doctype"] += doctype_checker(content, user_id, link)
         soup = BeautifulSoup(content, "html.parser")
         for tag in TAG_LIST:
             id_total_stats[user_id]["tag"][tag] += tag_usage_checker(soup, user_id, tag, link)
+    print("Completed {} {}".format(user_id, len(id_url_pages[user_id])))
 
-pprint(id_total_stats)
+for user_id in ids_to_check:
+    print("\nStats on {}".format(user_id))
+    print("Amount of times DOCTYPE was used: {}".format(id_total_stats[user_id]["doctype"]))
+    print("Amount of pages checked: {}".format(id_total_stats[user_id]["page_amount"]))
+    for tag in TAG_LIST:
+        print("Amount of times <{}> was used: {}".format(tag, id_total_stats[user_id]["tag"][tag]))
