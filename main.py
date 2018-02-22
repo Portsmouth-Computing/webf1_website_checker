@@ -4,11 +4,14 @@ from bs4 import BeautifulSoup
 ids_to_check = []
 id_homepage = {}
 id_url_pages = {}
-id_total_stats = {}
+id_good_stats = {}
+id_bad_stats = {}
 banned_links = ["w3.org", "google.co"]
 check_loop = True
 
-TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
+BAD_HTML_LIST = ["br", "font", "center", "table", "style"]
+GOOD_HTML_LIST = ["section", "nav", "header", "footer", "aside", "main", "figure", "div"]
+#TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
 banned_formats = ["mp4", "jpg", "webm", "css"]
 
 
@@ -79,24 +82,49 @@ for user_id in ids_to_check:
 
 print("\n")
 
+#Init
 for user_id in ids_to_check:
-    id_total_stats[user_id] = {"page_amount": len(id_url_pages[user_id]), "doctype": 0, "tag": {}}
-    for tag in TAG_LIST:
-        id_total_stats[user_id]["tag"][tag] = 0
+    id_good_stats[user_id] = {"page_amount": len(id_url_pages[user_id]), "doctype": 0, "tag": {}}
+    id_bad_stats[user_id] = {"page_amount": len(id_url_pages[user_id]), "doctype": 0, "tag": {}}
+    for tag in BAD_HTML_LIST:
+        id_bad_stats[user_id]["tag"][tag] = 0
+    for tag in GOOD_HTML_LIST:
+        id_good_stats[user_id]["tag"][tag] = 0
+        
 
 for user_id in ids_to_check:
     print("Started {}".format(user_id))
     for link in id_url_pages[user_id]:
         content = requests.get(link).content
-        id_total_stats[user_id]["doctype"] += doctype_checker(content, user_id, link)
+        id_good_stats[user_id]["doctype"] += doctype_checker(content, user_id, link)
         soup = BeautifulSoup(content, "html.parser")
-        for tag in TAG_LIST:
-            id_total_stats[user_id]["tag"][tag] += tag_usage_checker(soup, user_id, tag, link)
+        for tag in BAD_HTML_LIST:
+            id_bad_stats[user_id]["tag"][tag] += tag_usage_checker(soup, user_id, tag, link)
+        for tag in GOOD_HTML_LIST:
+            id_good_stats[user_id]["tag"][tag] += tag_usage_checker(soup, user_id, tag, link)
     print("Completed {} {}".format(user_id, len(id_url_pages[user_id])))
 
+#Print the stats
 for user_id in ids_to_check:
+    print("\n==================================================")
     print("\nStats on {}".format(user_id))
-    print("Amount of times DOCTYPE was used: {}".format(id_total_stats[user_id]["doctype"]))
-    print("Amount of pages checked: {}".format(id_total_stats[user_id]["page_amount"]))
-    for tag in TAG_LIST:
-        print("Amount of times <{}> was used: {}".format(tag, id_total_stats[user_id]["tag"][tag]))
+    print("\n==General HTML Used: ==")
+    print("Amount of times DOCTYPE was used: {}".format(id_good_stats[user_id]["doctype"]))
+    print("Amount of pages checked: {}".format(id_good_stats[user_id]["page_amount"]))
+    #Final output
+    print("\n== Bad HTML Used: ==")
+    for tag in BAD_HTML_LIST:
+        print("Amount of times <{}> was used: {}".format(tag, id_bad_stats[user_id]["tag"][tag]))
+    print("\n== Good HTML Used: ==")
+    for tag in GOOD_HTML_LIST:
+        print("Amount of times <{}> was used: {}".format(tag, id_good_stats[user_id]["tag"][tag]))
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
