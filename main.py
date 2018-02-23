@@ -1,11 +1,13 @@
 import requests  # Needed for website fetching
 from bs4 import BeautifulSoup  # Needed for website content processing
+from time import sleep
 
 ids_to_check = []
 id_homepage = {}
 id_url_pages = {}
 id_good_stats = {}
 id_bad_stats = {}
+id_w3_stats = {}
 banned_links = ["w3.org", "google.co"]
 check_loop = True
 
@@ -57,6 +59,19 @@ def recursive_page_finder(soup, user_id):
                 else:
                     print("Didn't add {}".format("http://{}.web1.rdfx.org/{}".format(user_id, link)))
 
+
+def w3_validate(url, user_id):
+    id_w3_stats[user_id] = {"errors": 0, "warnings": 0, "info": 0}
+    content = requests.get("http://validator.w3.org/nu/?out=json", params={"doc": url}, headers={"content-type": "text/html; charset=utf-8"})
+    json = content.json()
+    for x in json["messages"]:
+        if x["type"] == "error":
+            id_w3_stats[user_id]["errors"] += 1
+        elif x["type"] == "warning":
+            id_w3_stats[user_id]["warnings"] += 1
+        elif x["type"] == "info":
+            id_w3_stats[user_id]["info"] += 1
+
 # Getting the user id's
 
 
@@ -80,6 +95,8 @@ for user_id in ids_to_check:
 for user_id in ids_to_check:
     soup = BeautifulSoup(id_homepage[user_id]["content"], "html.parser")
     recursive_page_finder(soup, user_id)
+    w3_validate(id_homepage[user_id]["url"], user_id)
+    sleep(1)
 
 print("\n")
 
@@ -119,13 +136,7 @@ for user_id in ids_to_check:
     print("\n== Good HTML Used: ==")
     for tag in GOOD_HTML_LIST:
         print("Amount of times <{}> was used: {}".format(tag, id_good_stats[user_id]["tag"][tag]))
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+    print("\n== W3 Validator Check: ==")
+    print("Amount of W3 Errors: {}".format(id_w3_stats[user_id]["errors"]))
+    print("Amount of W3 Warnings: {}".format(id_w3_stats[user_id]["warnings"]))
+    print("Amount of W3 Info: {}".format(id_w3_stats[user_id]["info"]))
