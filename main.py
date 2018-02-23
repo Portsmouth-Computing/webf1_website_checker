@@ -12,7 +12,7 @@ banned_links = ["w3.org", "google.co"]
 check_loop = True
 
 BAD_HTML_LIST = ["br", "font", "center", "table", "style"]
-GOOD_HTML_LIST = ["section", "nav", "header", "footer", "aside", "main", "figure", "div"]
+GOOD_HTML_LIST = ["section", "nav", "header", "footer", "aside", "main", "figure", "div", "video", "image", "source", "canvas", "audio"]
 DOCTYPE_CHECK_LIST = ["<!DOCTYPE", "<!doctype"]
 # TAG_LIST = ["br", "font", "center", "table", "article", "section", "nav", "header", "footer", "aside", "main", "figure", "div"]
 banned_formats = ["mp4", "jpg", "webm", "css"]
